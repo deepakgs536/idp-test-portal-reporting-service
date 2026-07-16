@@ -1,0 +1,132 @@
+========================================
+REPORTING SERVICE CONFIGURATION & GUIDE
+========================================
+
+1. PREREQUISITES
+----------------------------------------
+- AWS CLI installed and configured.
+- Python 3.13 installed locally (optional, for local testing).
+- Appropriate IAM permissions for DynamoDB, SNS, and SQS.
+
+
+2. HOW TO ZIP
+----------------------------------------
+You need to package the Python files into a ZIP archive for AWS Lambda deployment.
+Since the only dependency is `boto3` (which is pre-installed in the Lambda runtime), you don't need to package external libraries.
+
+Run the following command inside the `reporting-service` directory:
+
+Windows (PowerShell):
+Compress-Archive -Path * -DestinationPath function.zip
+
+Mac/Linux/Git Bash:
+zip -r function.zip . -x "*.git*"
+
+
+3. HOW TO DEPLOY
+----------------------------------------
+Step 1: Create the Lambda Function
+- Go to the AWS Management Console > Lambda.
+- Click "Create function".
+- Choose "Author from scratch".
+- Name: reporting-service
+- Runtime: Python 3.13
+- Architecture: x86_64 or arm64
+
+Step 2: Upload the Code
+- In the function overview, go to the "Code" tab.
+- Click "Upload from" > ".zip file" and select `function.zip`.
+
+Step 3: Configure the Handler
+- Go to "Runtime settings" > Edit.
+- Set Handler to: `handler.lambda_handler`
+
+Step 4: Set Environment Variables
+- Go to "Configuration" > "Environment variables" > Edit.
+- Add the following keys:
+  * AWS_REGION (e.g., us-east-1)
+  * INDIVIDUAL_REPORTS_TABLE (e.g., IndividualReports)
+  * TEST_REPORTS_TABLE (e.g., TestReports)
+  * CANDIDATE_REPORT_TOPIC_ARN (Your SNS Topic ARN)
+  * TEST_REPORT_TOPIC_ARN (Your SNS Topic ARN)
+
+Step 5: Attach IAM Permissions
+- Go to "Configuration" > "Permissions" > Click the Execution Role name.
+- Attach the following permissions to the role:
+  * AmazonDynamoDBFullAccess (or scoped to your specific tables)
+  * AmazonSNSFullAccess (or scoped to your specific topics)
+  * AmazonSQSFullAccess (or scoped to your specific queue)
+  * AWSLambdaBasicExecutionRole (for CloudWatch Logs)
+
+
+4. EVENT TRIGGERS (SQS & API GATEWAY)
+----------------------------------------
+API Gateway:
+- Go to "Configuration" > "Triggers" > "Add trigger".
+- Select "API Gateway".
+- Create a new REST API or use an existing one.
+- Security: Open (for testing) or API Key/IAM as needed.
+- IMPORTANT: Ensure "Lambda Proxy integration" is ENABLED.
+
+SQS:
+- Go to "Configuration" > "Triggers" > "Add trigger".
+- Select "SQS".
+- Choose your `ReportingServiceQueue`.
+
+
+5. API ENDPOINTS
+----------------------------------------
+Once your API Gateway is deployed, you will have access to the following endpoints under your API base URL:
+
+- POST /reports/generate
+  (Payload: {"testId": "...", "userId": "..."})
+- GET /reports/tests
+  (Returns all Test Reports)
+- GET /reports/tests/{testId}
+  (Returns a specific Test Report)
+- GET /reports/tests/{testId}/candidates
+  (Returns all Individual Reports for a specific test)
+- GET /reports/tests/{testId}/candidates/{userId}
+  (Returns a specific Individual Report)
+- DELETE /reports/tests/{testId}/candidates/{userId}
+  (Deletes a specific Individual Report)
+- GET /health
+  (Health check endpoint)
+
+
+6. HOW TO TEST
+----------------------------------------
+A) Testing SQS via AWS Console:
+- Go to the SQS Console > Select `ReportingServiceQueue` > "Send and receive messages".
+- Send the following JSON in the Message Body:
+  {
+      "eventType": "GradeCompleted",
+      "testId": "TEST001",
+      "userId": "USER001"
+  }
+- Check Lambda CloudWatch Logs to verify the report generation was triggered successfully.
+
+B) Testing API via cURL / Postman:
+(Replace `<API_ID>` and `<REGION>` with your API Gateway details, and `/default` with your stage name)
+
+1. Generate Report Manually:
+curl -X POST https://<API_ID>.execute-api.<REGION>.amazonaws.com/default/reports/generate \
+-H "Content-Type: application/json" \
+-d '{"testId": "TEST001", "userId": "USER001"}'
+
+2. Get All Test Reports:
+curl https://<API_ID>.execute-api.<REGION>.amazonaws.com/default/reports/tests
+
+3. Get Candidate Report:
+curl https://<API_ID>.execute-api.<REGION>.amazonaws.com/default/reports/tests/TEST001/candidates/USER001
+
+4. Health Check:
+curl https://<API_ID>.execute-api.<REGION>.amazonaws.com/default/health
+
+C) Testing Locally (Sanity Check):
+You can create a temporary file named `test_local.py` in the root folder with the following:
+
+import handler
+print(handler.lambda_handler({"httpMethod": "GET", "resource": "/health"}, None))
+
+Run it using: `python test_local.py`

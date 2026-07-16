@@ -1,0 +1,90 @@
+import json
+import logging
+from utils import build_response
+from service import ReportingService
+from repository import IndividualReportRepository, TestReportRepository
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+reporting_service = ReportingService()
+individual_repo = IndividualReportRepository()
+test_repo = TestReportRepository()
+
+def generate_report(event):
+    try:
+        body = json.loads(event.get('body') or '{}')
+        test_id = body.get('testId')
+        user_id = body.get('userId')
+        
+        if not test_id or not user_id:
+            return build_response(400, False, "testId and userId are required")
+            
+        reporting_service.generate_reports(test_id, user_id)
+        return build_response(200, True, "Report generation triggered successfully")
+    except Exception as e:
+        logger.error(f"Error in generate_report: {str(e)}")
+        return build_response(500, False, "Internal server error")
+
+def get_all_test_reports(event):
+    try:
+        reports = test_repo.list_all()
+        return build_response(200, True, "Fetched test reports", reports)
+    except Exception as e:
+        logger.error(f"Error in get_all_test_reports: {str(e)}")
+        return build_response(500, False, "Internal server error")
+
+def get_test_report(event, path_parameters):
+    try:
+        test_id = path_parameters.get('testId')
+        report = test_repo.get(test_id)
+        
+        if not report:
+            return build_response(404, False, "Test report not found")
+            
+        return build_response(200, True, "Fetched test report", report)
+    except Exception as e:
+        logger.error(f"Error in get_test_report: {str(e)}")
+        return build_response(500, False, "Internal server error")
+
+def get_test_candidates(event, path_parameters):
+    try:
+        test_id = path_parameters.get('testId')
+        reports = individual_repo.list_by_test(test_id)
+        return build_response(200, True, "Fetched candidate reports", reports)
+    except Exception as e:
+        logger.error(f"Error in get_test_candidates: {str(e)}")
+        return build_response(500, False, "Internal server error")
+
+def get_candidate_report(event, path_parameters):
+    try:
+        test_id = path_parameters.get('testId')
+        user_id = path_parameters.get('userId')
+        report = individual_repo.get(test_id, user_id)
+        
+        if not report:
+            return build_response(404, False, "Candidate report not found")
+            
+        return build_response(200, True, "Fetched candidate report", report)
+    except Exception as e:
+        logger.error(f"Error in get_candidate_report: {str(e)}")
+        return build_response(500, False, "Internal server error")
+
+def delete_candidate_report(event, path_parameters):
+    try:
+        test_id = path_parameters.get('testId')
+        user_id = path_parameters.get('userId')
+        
+        # Check if exists
+        report = individual_repo.get(test_id, user_id)
+        if not report:
+            return build_response(404, False, "Candidate report not found")
+            
+        individual_repo.delete(test_id, user_id)
+        return build_response(200, True, "Deleted candidate report")
+    except Exception as e:
+        logger.error(f"Error in delete_candidate_report: {str(e)}")
+        return build_response(500, False, "Internal server error")
+
+def health_check(event):
+    return build_response(200, True, "Service is healthy")
