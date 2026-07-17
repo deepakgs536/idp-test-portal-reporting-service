@@ -1,7 +1,7 @@
 import logging
 from decimal import Decimal
 from repository import IndividualReportRepository, TestReportRepository
-from mock_data import get_grading_service_data, get_candidate_service_data, get_test_service_data
+from mock_data import get_grading_service_data, get_candidate_service_data, get_test_service_data, get_proctoring_service_data
 from utils import get_current_time
 import sns
 
@@ -18,6 +18,7 @@ class ReportingService:
         
         grading_data = get_grading_service_data(test_id, user_id)
         candidate_data = get_candidate_service_data(user_id)
+        proctoring_data = get_proctoring_service_data(test_id, user_id)
         
         report = {
             "testId": test_id,
@@ -32,6 +33,7 @@ class ReportingService:
             "timeTaken": Decimal(str(grading_data.get("timeTaken", 0))),
             "status": grading_data.get("status"),
             "submittedAt": grading_data.get("submittedAt"),
+            "proctoringDetails": proctoring_data,
             "generatedAt": get_current_time()
         }
         
@@ -60,6 +62,9 @@ class ReportingService:
         total_time = sum(float(c.get("timeTaken", 0)) for c in candidates)
         average_time_taken = total_time / completed_candidates if completed_candidates > 0 else 0
         
+        total_warnings = sum(int(c.get("proctoringDetails", {}).get("warningCount", 0)) for c in candidates)
+        average_warnings = total_warnings / completed_candidates if completed_candidates > 0 else 0
+        
         existing_report = self.test_repo.get(test_id)
         generated_at = existing_report.get("generatedAt") if existing_report else get_current_time()
         
@@ -75,6 +80,8 @@ class ReportingService:
             "failedCandidates": failed_candidates,
             "passPercentage": Decimal(str(round(pass_percentage, 2))),
             "averageTimeTaken": Decimal(str(round(average_time_taken, 2))),
+            "totalWarnings": Decimal(str(total_warnings)),
+            "averageWarnings": Decimal(str(round(average_warnings, 2))),
             "generatedAt": generated_at,
             "lastUpdated": get_current_time()
         }

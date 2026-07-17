@@ -21,3 +21,14 @@ def get_test_service_data(test_id):
         "testName": "Java Fundamentals",
         "totalCandidates": 120
     }
+
+def get_proctoring_service_data(test_id, user_id):
+    return {
+        "sessionId": f"session_{user_id}",
+        "examId": test_id,
+        "studentId": user_id,
+        "warningCount": 3,
+        "status": "ACTIVE",
+        "startedAt": "2026-07-16T10:00:00Z",
+        "endedAt": "2026-07-16T11:00:00Z"
+    }
