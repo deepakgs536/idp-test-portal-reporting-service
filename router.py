@@ -38,13 +38,13 @@ def route_request(event):
     elif http_method == 'GET' and resource == '/reports/tests/{testId}/candidates':
         return controller.get_test_candidates(event, path_parameters)
         
-    elif http_method == 'GET' and resource == '/reports/tests/{testId}/candidates/{userId}':
+    elif http_method == 'GET' and resource == '/reports/tests/{testId}/candidates/{mailId}':
         return controller.get_candidate_report(event, path_parameters)
         
-    elif http_method == 'DELETE' and resource == '/reports/tests/{testId}/candidates/{userId}':
+    elif http_method == 'DELETE' and resource == '/reports/tests/{testId}/candidates/{mailId}':
         return controller.delete_candidate_report(event, path_parameters)
         
-    elif http_method == 'GET' and resource == '/health':
+    elif http_method == 'GET' and resource == '/reports/health':
         return controller.health_check(event)
         
     else:

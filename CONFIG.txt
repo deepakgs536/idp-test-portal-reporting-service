@@ -79,16 +79,16 @@ SQS:
 Once your API Gateway is deployed, you will have access to the following endpoints under your API base URL:
 
 - POST /reports/generate
-  (Payload: {"testId": "...", "userId": "..."})
+  (Payload: {"testId": "...", "mailId": "..."})
 - GET /reports/tests
   (Returns all Test Reports)
 - GET /reports/tests/{testId}
   (Returns a specific Test Report)
 - GET /reports/tests/{testId}/candidates
   (Returns all Individual Reports for a specific test)
-- GET /reports/tests/{testId}/candidates/{userId}
+- GET /reports/tests/{testId}/candidates/{mailId}
   (Returns a specific Individual Report)
-- DELETE /reports/tests/{testId}/candidates/{userId}
+- DELETE /reports/tests/{testId}/candidates/{mailId}
   (Deletes a specific Individual Report)
 - GET /health
   (Health check endpoint)
@@ -102,7 +102,7 @@ A) Testing SQS via AWS Console:
   {
       "eventType": "GradeCompleted",
       "testId": "TEST001",
-      "userId": "USER001"
+      "mailId": "USER001"
   }
 - Check Lambda CloudWatch Logs to verify the report generation was triggered successfully.
 
@@ -112,7 +112,7 @@ B) Testing API via cURL / Postman:
 1. Generate Report Manually:
 curl -X POST https://<API_ID>.execute-api.<REGION>.amazonaws.com/default/reports/generate \
 -H "Content-Type: application/json" \
--d '{"testId": "TEST001", "userId": "USER001"}'
+-d '{"testId": "TEST001", "mailId": "USER001"}'
 
 2. Get All Test Reports:
 curl https://<API_ID>.execute-api.<REGION>.amazonaws.com/default/reports/tests

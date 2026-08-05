@@ -22,13 +22,33 @@ def publish_message(topic_arn, message):
     except Exception as e:
         logger.error(f"Error publishing message to SNS: {str(e)}")
 
-def publish_candidate_report_generated(test_id, user_id):
+def publish_candidate_report_generated(report: dict):
+
     message = {
         "eventType": "CandidateReportGenerated",
-        "testId": test_id,
-        "userId": user_id
+        "data": {
+            "testId": report["testId"],
+            "mailId": report["mailId"],
+            "candidateName": report["candidateName"],
+            "college": report["college"],
+            "score": float(report["score"]),
+            "percentage": float(report["percentage"]),
+            "timeTaken": float(report["timeTaken"]),
+            "warningCount": report["proctoringDetails"].get("warningCount", 0)
+                if report.get("proctoringDetails")
+                else 0,
+            "status": report["status"],
+            "generatedAt": report["generatedAt"]
+        }
     }
-    publish_message(config.CANDIDATE_REPORT_TOPIC_ARN, message)
+    try:
+        publish_message(
+            config.CANDIDATE_REPORT_TOPIC_ARN,
+            message
+        )
+    except Exception as e:
+        logger.error(f"Error publishing message to SNS: {str(e)}")
+    
 
 def publish_test_report_generated(test_id):
     message = {

@@ -15,12 +15,12 @@ def generate_report(event):
     try:
         body = json.loads(event.get('body') or '{}')
         test_id = body.get('testId')
-        user_id = body.get('userId')
+        mail_id = body.get('mailId')
         
-        if not test_id or not user_id:
-            return build_response(400, False, "testId and userId are required")
+        if not test_id or not mail_id:
+            return build_response(400, False, "testId and mailId are required")
             
-        reporting_service.generate_reports(test_id, user_id)
+        reporting_service.generate_reports(test_id, mail_id)
         return build_response(200, True, "Report generation triggered successfully")
     except Exception as e:
         logger.error(f"Error in generate_report: {str(e)}")
@@ -59,8 +59,8 @@ def get_test_candidates(event, path_parameters):
 def get_candidate_report(event, path_parameters):
     try:
         test_id = path_parameters.get('testId')
-        user_id = path_parameters.get('userId')
-        report = individual_repo.get(test_id, user_id)
+        mail_id = path_parameters.get('mailId')
+        report = individual_repo.get(test_id, mail_id)
         
         if not report:
             return build_response(404, False, "Candidate report not found")
@@ -73,14 +73,14 @@ def get_candidate_report(event, path_parameters):
 def delete_candidate_report(event, path_parameters):
     try:
         test_id = path_parameters.get('testId')
-        user_id = path_parameters.get('userId')
+        mail_id = path_parameters.get('mailId')
         
         # Check if exists
-        report = individual_repo.get(test_id, user_id)
+        report = individual_repo.get(test_id, mail_id)
         if not report:
             return build_response(404, False, "Candidate report not found")
             
-        individual_repo.delete(test_id, user_id)
+        individual_repo.delete(test_id, mail_id)
         return build_response(200, True, "Deleted candidate report")
     except Exception as e:
         logger.error(f"Error in delete_candidate_report: {str(e)}")

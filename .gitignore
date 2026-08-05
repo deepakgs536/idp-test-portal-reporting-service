@@ -29,3 +29,10 @@ function.zip
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Dependencies and build artifacts
+*.zip
+*.dist-info/
+et_xmlfile/
+openpyxl/
+report/

@@ -1,4 +1,5 @@
 import logging
+import json
 from router import route_request
 from sqs import process_sqs_event
 
@@ -6,7 +7,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 def lambda_handler(event, context):
-    logger.info("Received event")
+    logger.info(f"Received event: {json.dumps(event) if isinstance(event, dict) else event}")
     
     if 'Records' in event:
         # Check if it's an SQS event

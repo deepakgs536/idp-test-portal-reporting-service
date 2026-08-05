@@ -12,14 +12,14 @@ class IndividualReportRepository:
     def create(self, report):
         try:
             self.table.put_item(Item=report)
-            logger.info(f"Created individual report for testId: {report['testId']}, userId: {report['userId']}")
+            logger.info(f"Created individual report for testId: {report['testId']}, mailId: {report['mailId']}")
         except Exception as e:
             logger.error(f"Error creating individual report: {str(e)}")
             raise
 
-    def get(self, test_id, user_id):
+    def get(self, test_id, mail_id):
         try:
-            response = self.table.get_item(Key={'testId': test_id, 'userId': user_id})
+            response = self.table.get_item(Key={'testId': test_id, 'mailId': mail_id})
             return response.get('Item')
         except Exception as e:
             logger.error(f"Error getting individual report: {str(e)}")
@@ -35,10 +35,10 @@ class IndividualReportRepository:
             logger.error(f"Error listing individual reports by testId: {str(e)}")
             raise
 
-    def delete(self, test_id, user_id):
+    def delete(self, test_id, mail_id):
         try:
-            self.table.delete_item(Key={'testId': test_id, 'userId': user_id})
-            logger.info(f"Deleted individual report for testId: {test_id}, userId: {user_id}")
+            self.table.delete_item(Key={'testId': test_id, 'mailId': mail_id})
+            logger.info(f"Deleted individual report for testId: {test_id}, mailId: {mail_id}")
         except Exception as e:
             logger.error(f"Error deleting individual report: {str(e)}")
             raise

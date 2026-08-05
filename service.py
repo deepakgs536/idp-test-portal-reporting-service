@@ -1,8 +1,10 @@
 import logging
 from decimal import Decimal
 from repository import IndividualReportRepository, TestReportRepository
+import base64 from export.excel_export import export_candidates_to_excel
 from mock_data import get_grading_service_data, get_candidate_service_data, get_test_service_data, get_proctoring_service_data
 from utils import get_current_time
+from datetime import datetime
 import sns
 
 logger = logging.getLogger()
@@ -13,24 +15,38 @@ class ReportingService:
         self.individual_repo = IndividualReportRepository()
         self.test_repo = TestReportRepository()
 
-    def generate_candidate_report(self, test_id, user_id):
-        logger.info(f"Generating candidate report for testId: {test_id}, userId: {user_id}")
+    def generate_candidate_report(self, detail):
+        test_id = detail.get("testId")
+        mail_id = detail.get("mailId")
+        logger.info(f"Generating candidate report for testId: {test_id}, mailId: {mail_id}")
         
-        grading_data = get_grading_service_data(test_id, user_id)
-        candidate_data = get_candidate_service_data(user_id)
-        proctoring_data = get_proctoring_service_data(test_id, user_id)
+        grading_data = get_grading_service_data(detail)
+        candidate_data = get_candidate_service_data(mail_id)
+        proctoring_data = get_proctoring_service_data(test_id, mail_id)
+        
+        time_taken = 0
+        if proctoring_data and proctoring_data.get("startedAt") and proctoring_data.get("endedAt"):
+            try:
+                start_time = datetime.fromisoformat(proctoring_data["startedAt"].replace("Z", "+00:00"))
+                end_time = datetime.fromisoformat(proctoring_data["endedAt"].replace("Z", "+00:00"))
+                time_taken = (end_time - start_time).total_seconds()
+            except Exception as e:
+                logger.error(f"Error calculating timeTaken: {e}")
         
         report = {
             "testId": test_id,
-            "userId": user_id,
+            "testName": grading_data.get("testName"),
+            "mailId": mail_id,
             "candidateName": candidate_data.get("candidateName"),
+            "college": candidate_data.get("college"),
+            "mobile": candidate_data.get("mobile"),
             "score": Decimal(str(grading_data.get("score", 0))),
             "totalMarks": Decimal(str(grading_data.get("totalMarks", 0))),
             "percentage": Decimal(str(grading_data.get("percentage", 0))),
             "correctAnswers": grading_data.get("correctAnswers", 0),
             "wrongAnswers": grading_data.get("wrongAnswers", 0),
             "unanswered": grading_data.get("unanswered", 0),
-            "timeTaken": Decimal(str(grading_data.get("timeTaken", 0))),
+            "timeTaken": Decimal(str(time_taken)),
             "status": grading_data.get("status"),
             "submittedAt": grading_data.get("submittedAt"),
             "proctoringDetails": proctoring_data,
@@ -38,6 +54,7 @@ class ReportingService:
         }
         
         self.individual_repo.create(report)
+        sns.publish_candidate_report_generated(report)
         return report
 
     def update_test_report(self, test_id):
@@ -72,6 +89,8 @@ class ReportingService:
             "testId": test_id,
             "testName": test_data.get("testName"),
             "totalCandidates": test_data.get("totalCandidates"),
+            "durationMinutes": test_data.get("durationMinutes"),
+            "totalMarks": test_data.get("totalMarks"),
             "completedCandidates": completed_candidates,
             "averageScore": Decimal(str(round(average_score, 2))),
             "highestScore": Decimal(str(round(highest_score, 2))),
@@ -89,18 +108,37 @@ class ReportingService:
         self.test_repo.upsert(report)
         return report
 
-    def generate_reports(self, test_id, user_id):
-        logger.info(f"Starting report generation process for testId: {test_id}, userId: {user_id}")
+    def generate_reports(self, detail):
+        test_id = detail.get("testId")
+        mail_id = detail.get("mailId")
+        logger.info(f"Starting report generation process for testId: {test_id}, mailId: {mail_id}")
         
         try:
             # Generate Individual Report
-            self.generate_candidate_report(test_id, user_id)
-            sns.publish_candidate_report_generated(test_id, user_id)
+            self.generate_candidate_report(detail)
             
             # Update Test Report
             self.update_test_report(test_id)
             sns.publish_test_report_generated(test_id)
             
-            logger.info(f"Report generation process completed for testId: {test_id}, userId: {user_id}")
+            logger.info(f"Report generation process completed for testId: {test_id}, mailId: {mail_id}")
         except Exception as e:
             logger.error(f"Failed to generate reports: {str(e)}")
+
+    from export.excel_export import export_candidates_to_excel
+
+
+    def export_test_report(self, test_id):
+        candidates = self.individual_repo.list_by_test(test_id)
+
+        excel_file = export_candidates_to_excel(candidates)
+
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "Content-Disposition": f'attachment; filename="{test_id}_report.xlsx"'
+            },
+            "isBase64Encoded": True,
+            "body": base64.b64encode(excel_file).decode("utf-8")
+        }

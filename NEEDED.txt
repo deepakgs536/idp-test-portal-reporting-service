@@ -1,0 +1,157 @@
+### 1. Individual Report (Candidate Report)
+This report represents a single candidate's performance. It should include an overall summary, proctoring data, and a breakdown of how they performed in each section (MCQ vs. Coding).
+
+```json
+{
+  "testId": "973cd00a-6b0c-40fe-8592-099478fdb012",
+  "mailId": "candidate@example.com",
+  "candidateName": "John Doe",
+  "testName": "RIT-2026-TEST",
+  
+  "overallPerformance": {
+    "score": 25,
+    "totalMarks": 30,
+    "percentage": 83.33,
+    "timeTakenMinutes": 28.5,
+    "status": "PASSED"
+  },
+  
+  "sectionWisePerformance": [
+    {
+      "sectionId": "5e3facb5-8290-446d-80a7-609c79c083bf",
+      "sectionName": "MCQ",
+      "score": 9,
+      "totalMarks": 10,
+      "correctAnswers": 9,
+      "wrongAnswers": 1,
+      "unanswered": 0,
+      "timeTakenMinutes": 8.5
+    },
+    {
+      "sectionId": "a8587318-595e-4a86-85e7-9130ae461dea",
+      "sectionName": "CODING",
+      "score": 16,
+      "totalMarks": 20,
+      "questionsAttempted": 2,
+      "timeTakenMinutes": 20.0
+    }
+  ],
+
+  "proctoringDetails": {
+    "warningCount": 1,
+    "status": "CLEAN",
+    "startedAt": "2026-08-05T10:00:00Z",
+    "endedAt": "2026-08-05T10:28:30Z"
+  },
+  
+  "generatedAt": "2026-08-05T10:30:00Z"
+}
+```
+
+### 2. Test Report (Aggregated Report)
+This report aggregates the data of all candidates who took the RIT-2026-TEST. It provides high-level metrics (averages, pass/fail ratios) and can also include section-wise averages so instructors know which section was hardest for the batch.
+
+```json
+{
+  "testId": "973cd00a-6b0c-40fe-8592-099478fdb012",
+  "testName": "RIT-2026-TEST",
+  
+  "participation": {
+    "totalCandidatesRegistered": 100,
+    "completedCandidates": 95,
+    "passedCandidates": 70,
+    "failedCandidates": 25,
+    "passPercentage": 73.68
+  },
+  
+  "overallMetrics": {
+    "totalMarks": 30,
+    "averageScore": 21.5,
+    "highestScore": 30,
+    "lowestScore": 5,
+    "averageTimeTakenMinutes": 27.2,
+    "averageWarningsPerCandidate": 1.2
+  },
+  
+  "sectionWiseAverages": [
+    {
+      "sectionId": "5e3facb5-8290-446d-80a7-609c79c083bf",
+      "sectionName": "MCQ",
+      "averageScore": 7.5,
+      "highestScore": 10
+    },
+    {
+      "sectionId": "a8587318-595e-4a86-85e7-9130ae461dea",
+      "sectionName": "CODING",
+      "averageScore": 14.0,
+      "highestScore": 20
+    }
+  ],
+  
+  "generatedAt": "2026-08-05T11:00:00Z",
+  "lastUpdated": "2026-08-05T15:00:00Z"
+}
+```
+
+---
+
+### 3. Data Required from Each Microservice
+To generate the above reports, the Reporting Service needs to pull specific data points from the other microservices in the ecosystem.
+
+#### A. Test Service
+Provides the structural blueprint and metadata of the test.
+- **`title`**: To display `testName` on the report.
+- **`totalMarks`**: To calculate overall percentages.
+- **`sections` array**: Needs `sectionId`, `sectionName`, and `marks` to build the `sectionWisePerformance` breakdown and know the max marks per section.
+- **`totalCandidates`**: (Optional) For the Test Report participation metrics.
+
+#### B. Candidate (User) Service
+Provides personal information about the test taker.
+- **`candidateName`**: Full name of the candidate.
+- **`college` / `organization`**: Demographic data for filtering rankings.
+
+#### C. Grading Service
+Provides the actual evaluation of the candidate's answers. The Grading Service should trigger the report generation by publishing a `GradingCompleted` event (or returning this in an API response) structured exactly like this:
+
+```json
+{
+  "testId": "973cd00a-6b0c-40fe-8592-099478fdb012",
+  "mailId": "candidate@example.com",
+  "overall": {
+    "score": 25,
+    "totalMarks": 30,
+    "percentage": 83.33,
+    "correctAnswers": 9,
+    "wrongAnswers": 1,
+    "unanswered": 0,
+    "status": "PASSED",
+    "submittedAt": "2026-08-05T10:28:30Z"
+  },
+  "sections": [
+    {
+      "sectionId": "5e3facb5-8290-446d-80a7-609c79c083bf",
+      "score": 9,
+      "totalMarks": 10,
+      "correctAnswers": 9,
+      "wrongAnswers": 1,
+      "unanswered": 0
+    },
+    {
+      "sectionId": "a8587318-595e-4a86-85e7-9130ae461dea",
+      "score": 16,
+      "totalMarks": 20,
+      "questionsAttempted": 2
+    }
+  ]
+}
+```
+
+**Key Event Details:**
+- **Overall Metrics**: Must include the aggregate `score`, `percentage`, and the final `status` (PASSED/FAILED) based on the test's overall passing criteria.
+- **Section-wise Metrics**: The event MUST contain a `sections` array breaking down scores mapped specifically to each `sectionId`. Without these IDs, the Reporting Service cannot generate section-level analytics like "MCQ vs. CODING" performance.
+
+#### D. Proctoring (Session) Service
+Provides the timing and integrity data of the test session.
+- **Timestamps**: `startedAt` and `endedAt` (Required to calculate the `timeTakenMinutes`). Ideally, it should also track timestamps per section if the UI enforces hard stops per section.
+- **`warningCount`**: Number of times the user switched tabs or triggered warnings.
+- **`status`**: The integrity status of the session (e.g., CLEAN, SUSPICIOUS).
