@@ -14,7 +14,8 @@ def get_grading_service_data(detail):
         "unanswered": detail.get("unanswered"),
         "timeTaken": detail.get("timeTaken"),
         "status": detail.get("status"),
-        "submittedAt": detail.get("submittedAt")
+        "submittedAt": detail.get("submittedAt"),
+        "sections": detail.get("sections", [])
     }
 
 def get_candidate_service_data(mail_id):
@@ -86,7 +87,8 @@ def get_test_service_data(test_id):
             "testName": data.get("title", "Unknown Test"),
             "totalCandidates": data.get("totalCandidates", 0),
             "durationMinutes": data.get("durationMinutes", 0),
-            "totalMarks": data.get("totalMarks", 100)
+            "totalMarks": data.get("totalMarks", 100),
+            "sections": data.get("sections", [])
         }
 
     except Exception as e:

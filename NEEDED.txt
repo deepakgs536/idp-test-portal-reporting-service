@@ -30,6 +30,13 @@ This report represents a single candidate's performance. It should include an ov
     {
       "sectionId": "a8587318-595e-4a86-85e7-9130ae461dea",
       "sectionName": "CODING",
+      "questions":[
+        {
+        "question" : "pascal triangle",
+        "questionId": "Q999",
+        "studentAnswer": "public class Main {}",
+        }
+      ]
       "score": 16,
       "totalMarks": 20,
       "questionsAttempted": 2,
@@ -140,7 +147,20 @@ Provides the actual evaluation of the candidate's answers. The Grading Service s
       "sectionId": "a8587318-595e-4a86-85e7-9130ae461dea",
       "score": 16,
       "totalMarks": 20,
-      "questionsAttempted": 2
+      "questionsAttempted": 2,
+      "questions":[
+        {
+        "question" : "pascal triangle",
+        "questionId": "Q999",
+        "studentAnswer": "public class Main {}"
+        },
+        {
+        "question" : "combinations",
+        "questionId": "Q900",
+        "studentAnswer": "public class Main {}"
+        }
+      ]
+      "sectionName": "CODING",
     }
   ]
 }
