@@ -38,6 +38,9 @@ def route_request(event):
     elif http_method == 'GET' and resource == '/reports/tests/{testId}/candidates':
         return controller.get_test_candidates(event, path_parameters)
         
+    elif http_method == 'GET' and resource == '/reports/tests/{testId}/export':
+        return controller.export_test_report(event, path_parameters)
+        
     elif http_method == 'GET' and resource == '/reports/tests/{testId}/candidates/{mailId}':
         return controller.get_candidate_report(event, path_parameters)
         

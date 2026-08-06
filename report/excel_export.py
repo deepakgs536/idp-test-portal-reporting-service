@@ -26,6 +26,7 @@ def export_candidates_to_excel(candidates):
         "Score",
         "Total Marks",
         "Percentage",
+        "Section Scores",
         "Correct Answers",
         "Wrong Answers",
         "Unanswered",
@@ -53,14 +54,23 @@ def export_candidates_to_excel(candidates):
         sheet.cell(row=row, column=5).value = float(report.get("score", 0))
         sheet.cell(row=row, column=6).value = float(report.get("totalMarks", 0))
         sheet.cell(row=row, column=7).value = float(report.get("percentage", 0))
-        sheet.cell(row=row, column=8).value = report.get("correctAnswers")
-        sheet.cell(row=row, column=9).value = report.get("wrongAnswers")
-        sheet.cell(row=row, column=10).value = report.get("unanswered")
-        sheet.cell(row=row, column=11).value = float(report.get("timeTaken", 0))
-        sheet.cell(row=row, column=12).value = report.get("status")
-        sheet.cell(row=row, column=13).value = proctor.get("warningCount", 0)
-        sheet.cell(row=row, column=14).value = report.get("submittedAt")
-        sheet.cell(row=row, column=15).value = report.get("generatedAt")
+        
+        section_scores = []
+        for sec in report.get("sectionWisePerformance", []):
+            name = sec.get("sectionName", "Unknown")
+            sec_score = float(sec.get("score", 0))
+            total = float(sec.get("totalMarks", 0))
+            section_scores.append(f"{name}: {sec_score}/{total}")
+            
+        sheet.cell(row=row, column=8).value = " | ".join(section_scores)
+        sheet.cell(row=row, column=9).value = report.get("correctAnswers")
+        sheet.cell(row=row, column=10).value = report.get("wrongAnswers")
+        sheet.cell(row=row, column=11).value = report.get("unanswered")
+        sheet.cell(row=row, column=12).value = float(report.get("timeTaken", 0))
+        sheet.cell(row=row, column=13).value = report.get("status")
+        sheet.cell(row=row, column=14).value = proctor.get("warningCount", 0)
+        sheet.cell(row=row, column=15).value = report.get("submittedAt")
+        sheet.cell(row=row, column=16).value = report.get("generatedAt")
 
     # Auto-fit column width
     for column_cells in sheet.columns:

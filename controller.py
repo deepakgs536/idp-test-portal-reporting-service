@@ -108,3 +108,11 @@ def delete_candidate_report(event, path_parameters):
 
 def health_check(event):
     return build_response(200, True, "Service is healthy")
+
+def export_test_report(event, path_parameters):
+    try:
+        test_id = path_parameters.get('testId')
+        return reporting_service.export_test_report(test_id)
+    except Exception as e:
+        logger.error(f"Error in export_test_report: {str(e)}")
+        return build_response(500, False, "Internal server error")
