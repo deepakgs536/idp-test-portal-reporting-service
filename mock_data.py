@@ -4,17 +4,18 @@ import json
 PROCTORING_SERVICE_URL = "https://dpm58qtugi.execute-api.ap-southeast-1.amazonaws.com"
 
 def get_grading_service_data(detail):
+    overall = detail.get("overall", {})
     return {
-        "testName": detail.get("testTitle"),
-        "score": detail.get("score"),
-        "totalMarks": detail.get("totalMarks"),
-        "percentage": detail.get("percentage"),
-        "correctAnswers": detail.get("correctAnswers"),
-        "wrongAnswers": detail.get("wrongAnswers"),
-        "unanswered": detail.get("unanswered"),
-        "timeTaken": detail.get("timeTaken"),
-        "status": detail.get("status"),
-        "submittedAt": detail.get("submittedAt"),
+        "testName": detail.get("testTitle") or "Unknown Test",
+        "score": overall.get("score") or 0,
+        "totalMarks": overall.get("totalMarks") or 0,
+        "percentage": overall.get("percentage") or 0,
+        "correctAnswers": overall.get("correctAnswers") or 0,
+        "wrongAnswers": overall.get("wrongAnswers") or 0,
+        "unanswered": overall.get("unanswered") or 0,
+        "timeTaken": overall.get("timeTaken") or 0,
+        "status": overall.get("status") or "FAILED",
+        "submittedAt": overall.get("submittedAt"),
         "sections": detail.get("sections", [])
     }
 

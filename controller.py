@@ -70,6 +70,26 @@ def get_candidate_report(event, path_parameters):
         logger.error(f"Error in get_candidate_report: {str(e)}")
         return build_response(500, False, "Internal server error")
 
+def update_coding_score(event, path_parameters):
+    try:
+        test_id = path_parameters.get('testId')
+        mail_id = path_parameters.get('mailId')
+        
+        body = json.loads(event.get('body') or '{}')
+        new_score = body.get('score')
+        
+        if new_score is None:
+            return build_response(400, False, "score is required in request body")
+            
+        report = reporting_service.update_candidate_coding_score(test_id, mail_id, new_score)
+        if not report:
+            return build_response(404, False, "Candidate report not found or CODING section missing")
+            
+        return build_response(200, True, "Updated coding score successfully", report)
+    except Exception as e:
+        logger.error(f"Error in update_coding_score: {str(e)}")
+        return build_response(500, False, "Internal server error")
+
 def delete_candidate_report(event, path_parameters):
     try:
         test_id = path_parameters.get('testId')

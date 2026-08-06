@@ -58,6 +58,45 @@ class ReportingService:
         sns.publish_candidate_report_generated(report)
         return report
 
+    def update_candidate_coding_score(self, test_id, mail_id, new_score):
+        logger.info(f"Updating CODING score for testId: {test_id}, mailId: {mail_id} to {new_score}")
+        
+        report = self.individual_repo.get(test_id, mail_id)
+        if not report:
+            return None
+            
+        sections = report.get("sectionWisePerformance", [])
+        coding_section_found = False
+        old_score = 0
+        
+        for sec in sections:
+            if sec.get("sectionName") == "CODING":
+                old_score = float(sec.get("score", 0))
+                sec["score"] = Decimal(str(new_score))
+                coding_section_found = True
+                break
+                
+        if not coding_section_found:
+            return None
+            
+        # Update overall score to reflect the change in the coding section
+        score_diff = float(new_score) - old_score
+        current_overall = float(report.get("score", 0))
+        report["score"] = Decimal(str(current_overall + score_diff))
+        
+        # Recalculate percentage if totalMarks > 0
+        total_marks = float(report.get("totalMarks", 0))
+        if total_marks > 0:
+            new_percentage = (float(report["score"]) / total_marks) * 100
+            report["percentage"] = Decimal(str(round(new_percentage, 2)))
+            
+        self.individual_repo.create(report)
+        
+        # After updating the individual report, we should update the test report to reflect new averages
+        self.update_test_report(test_id)
+        
+        return report
+
     def update_test_report(self, test_id):
         logger.info(f"Updating test report for testId: {test_id}")
         

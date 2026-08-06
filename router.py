@@ -41,6 +41,9 @@ def route_request(event):
     elif http_method == 'GET' and resource == '/reports/tests/{testId}/candidates/{mailId}':
         return controller.get_candidate_report(event, path_parameters)
         
+    elif http_method == 'PATCH' and resource == '/reports/tests/{testId}/candidates/{mailId}/coding-score':
+        return controller.update_coding_score(event, path_parameters)
+        
     elif http_method == 'DELETE' and resource == '/reports/tests/{testId}/candidates/{mailId}':
         return controller.delete_candidate_report(event, path_parameters)
         
