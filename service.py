@@ -198,8 +198,8 @@ class ReportingService:
         try:
             candidates = self.individual_repo.list_by_test(test_id)
 
-            # Placeholder for actual excel export logic since export_candidates_to_excel is missing
-            excel_file = b""
+            from report.excel_export import export_candidates_to_excel
+            excel_file = export_candidates_to_excel(candidates)
 
             return {
                 "statusCode": 200,

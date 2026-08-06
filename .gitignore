@@ -35,4 +35,3 @@ Thumbs.db
 *.dist-info/
 et_xmlfile/
 openpyxl/
-report/
