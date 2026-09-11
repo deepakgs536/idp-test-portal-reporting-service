@@ -1,0 +1,98 @@
+# ==============================
+# Python
+# ==============================
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# ==============================
+# Environment / Secrets
+# ==============================
+
+.env
+.env.*
+!.env.example
+
+# Private keys / certificates
+*.pem
+*.key
+
+# ==============================
+# Test / Coverage
+# ==============================
+
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# ==============================
+# Logs
+# ==============================
+
+*.log
+logs/
+
+# ==============================
+# IDE
+# ==============================
+
+.vscode/
+.idea/
+
+# ==============================
+# OS
+# ==============================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==============================
+# AWS SAM / Serverless
+# ==============================
+
+.aws-sam/
+.serverless/
+
+# ==============================
+# Terraform
+# ==============================
+
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Terraform variables can contain secrets
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# ==============================
+# Deployment Artifacts
+# ==============================
+
+*.zip
+*.tar
+*.tar.gz
+
+# ==============================
+# Temporary Files
+# ==============================
+
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
